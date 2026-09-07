@@ -1,0 +1,50 @@
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+return function(plr, rotSpeed)
+	local isWalking = false
+	local conn = nil
+
+	local function toggle(state)
+		if isWalking == state then return end
+		isWalking = state
+		local camera = Workspace.CurrentCamera
+
+		if isWalking then
+			if camera then
+				camera.CameraType = Enum.CameraType.Scriptable
+			end
+
+			conn = RunService.RenderStepped:Connect(function(dt)
+				local char = plr.Character
+				if not char then return end
+
+				local hum = char:FindFirstChild("Humanoid")
+				local root = char:FindFirstChild("HumanoidRootPart")
+
+				if hum then
+					hum:Move(Vector3.new(0, 0, -1), true)
+				end
+
+				if camera and root then
+					local targetPos = root.Position + Vector3.new(0, 2, 0)
+					camera.CFrame = camera.CFrame * CFrame.Angles(0, rotSpeed * dt, 0)
+					camera.CFrame = CFrame.new(targetPos) * (camera.CFrame - camera.CFrame.Position)
+				end
+			end)
+		else
+			if camera then
+				camera.CameraType = Enum.CameraType.Custom
+			end
+			if conn then
+				conn:Disconnect()
+				conn = nil
+			end
+		end
+	end
+
+	return {
+		set = toggle,
+		getState = function() return isWalking end
+	}
+end
